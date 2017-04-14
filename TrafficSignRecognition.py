@@ -2,14 +2,12 @@ import os
 import random
 import skimage.data
 import skimage.transform
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
 def load_data(data_dir):
     """Loads a data set and returns two lists:
-
     images: a list of Numpy arrays, each representing an image.
     labels: a list of numbers that represent the images labels.
     """
@@ -31,15 +29,18 @@ def load_data(data_dir):
             labels.append(int(d))
     return images, labels
 
-
 # Load training and testing datasets.
-train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
-test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
+#train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
+#test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
+train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Training")
+test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Testing")
 # train_data_dir = os.path.join("D:\\project\\traffic\\", "Training")
 # test_data_dir = os.path.join("D:\\project\\traffic\\", "Testing")
 
+#加载训练数据集
 images, labels = load_data(train_data_dir)
 
+#输出每个目录下的第一个图像
 def display_images_and_labels(images, labels):
     """Display the first image of each label."""
     unique_labels = set(labels)
@@ -54,34 +55,57 @@ def display_images_and_labels(images, labels):
         i += 1
         _ = plt.imshow(image)    #show image
     plt.show()
+#输出目录下的第一个图像
+#display_images_and_labels(images,labels)
 
 
+#将label向量转化为矩阵[branch,62]
+def labelsToMatrix(input,len):
+    labels_matraix = np.zeros([len,62])
+    i = 0
+    for k in input:
+        labels_matraix[i][k] = 1
+        i = i+1
+    return labels_matraix
+
+#从数据集中随机选择n张图片
+def batch(images,lanels,n):
+    sample_indexes = random.sample(range(len(images)), n)
+    sample_images = [images[i] for i in sample_indexes]
+    label_s = [lanels[i] for i in sample_indexes]
+    print("选择标签")
+    print(label_s)
+    sample_labels = labelsToMatrix(label_s,len(label_s))
+    return sample_images,sample_labels
 
 # Resize images
 images32 = [skimage.transform.resize(image, (32, 32))
                 for image in images]
 
-labels_a = np.zeros([len(labels),62])
 # 将label列表转化为矩阵
-j=0
-for i in range(0, len(labels)):
-    while labels[i] != j:
-        j = j + 1
-    labels_a[i][j] = 1
-print("labels_a")
-print(labels_a)
-images_a = np.array(images32)
+labels_train_all = labelsToMatrix(labels,len(labels))
+images_train_all = np.array(images32)
 
-# print("labels: ", labels_a.shape, "\nimages: ", images_a.shape)
+##==========================================================##
+
+#加载测试数据集
+test_images, test_labels = load_data(test_data_dir)
+# 将label列表转化为矩阵
+labels_test_all = labelsToMatrix(test_labels,len(test_labels))
+# Transform the images, just like we did with the training set.
+test_images32 = [skimage.transform.resize(image, (32, 32))
+                 for image in test_images]
+image_test_all = np.array(test_images32)
 
 # 计算分类精确度
 def compute_accuracy(v_xs, v_ys):
     global prediction
     y_pre = session.run(prediction, feed_dict={images_ph: v_xs, keep_prob: 1})
-    #print(session.run(prediction, feed_dict={images_ph: v_xs, keep_prob: 1}))
-    correct_prediction = tf.equal(tf.argmax(y_pre,1), tf.argmax(v_ys,1))
-
-    print(session.run(correct_prediction, feed_dict={images_ph: v_xs, labels_ph: v_ys, keep_prob: 1}))
+    correct_prediction = tf.equal(tf.argmax(y_pre,1), tf.argmax(v_ys,1))    #argmax函数返回每行最大值的索引（axis=0每一列）
+    print("预测分类")
+    print(session.run(tf.argmax(y_pre,1), feed_dict={images_ph: v_xs, labels_ph: v_ys, keep_prob: 1}))
+    print("实际分类")
+    print(session.run(tf.argmax(v_ys,1), feed_dict={images_ph: v_xs, labels_ph: v_ys, keep_prob: 1}))
 
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))   # 将correct_prediction 转为float32类型，然后求平均值
     result = session.run(accuracy, feed_dict={images_ph: v_xs, labels_ph: v_ys, keep_prob: 1})
@@ -152,9 +176,9 @@ h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2) # output size 16x16x64
 h_pool2 = max_pool_2x2(h_conv2)                          # output size 8x8x64
 
 ## fc1 layer ##
-# 第三层 是个全连接层,输入维数8*8*64, 输出维数为1024
-W_fc1 = weight_variable([8*8*64,2048])
-b_fc1 = bias_variable([2048])
+# 第三层 是个全连接层,输入维数8*8*64, 输出维数为2048
+W_fc1 = weight_variable([8*8*64,1024])
+b_fc1 = bias_variable([1024])
 # [n_samples, 8, 8, 64] ->> [n_samples, 8*8*64]
 h_pool2_flat = tf.reshape(h_pool2, [-1, 8*8*64])
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
@@ -162,70 +186,40 @@ h_fc1_drop = tf.nn.dropout(h_fc1, keep_prob)
 
 ## fc2 layer ##
 # 第四层，输入1024维，输出62维，也就是具体的0~61分类
-W_fc2 = weight_variable([2048, 62])
+W_fc2 = weight_variable([1024, 62])
 b_fc2 = bias_variable([62])
 prediction = tf.nn.softmax(tf.matmul(h_fc1_drop, W_fc2) + b_fc2)  # 使用softmax作为多分类激活函数
-cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels_ph * tf.log(prediction),
-                                              reduction_indices=[1]))      # 损失函数，交叉熵
-train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)   #使用adam优化
 
-# And, finally, an initialization op to execute before training.
-init = tf.initialize_all_variables()
+'''
+cross_entropy = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(
+      labels=labels_train, logits=prediction))
+'''
+
+cross_entropy = tf.reduce_mean(-tf.reduce_sum(labels_ph * tf.log(prediction), reduction_indices=[1]))      # 损失函数，交叉熵
+train_step = tf.train.AdamOptimizer(0.01).minimize(cross_entropy)   #使用adam优化
 
 # Create a session to run the graph we created.
 session = tf.Session()
 
+# important step
+# tf.initialize_all_variables() no long valid from
+# 2017-03-02 if using tensorflow >= 0.12
+if int((tf.__version__).split('.')[1]) < 12 and int((tf.__version__).split('.')[0]) < 1:
+    init = tf.initialize_all_variables()
+else:
+    init = tf.global_variables_initializer()
+
 # First step is always to initialize all variables.
 session.run(init)
 
-test_images, test_labels = load_data(test_data_dir)
-print("test_labels")
-print(test_labels)
-labels_test = np.zeros([len(test_labels),62])
-# 将label列表转化为矩阵
-k=0
-for i in range(0, len(test_labels)):
-    while labels[i] != k:
-        k = k + 1
-    labels_test[i][k] = 1
-
-print("label_test")
-print(labels_test)
-# Transform the images, just like we did with the training set.
-test_images32 = [skimage.transform.resize(image, (32, 32))
-                 for image in test_images]
-
 for i in range(20):
-    session.run(train_step, feed_dict={images_ph: images_a, labels_ph: labels_a, keep_prob: 0.5})
-    print("step %d, training accuracy %g"%(i,compute_accuracy(images_a, labels_a)))
+    image_train,labels_train = batch(images32,labels,100)   #从训练集中随机选取100张图片
+    print("训练数据")
+    print(labels_train)
+    session.run(train_step, feed_dict={images_ph: image_train, labels_ph: labels_train, keep_prob: 1})   #利用训练集的数据训练模型
+    image_test, labes_test = batch(test_images32, test_labels,100)  # 从测试集中随机选取100张图片
+    print("测试数据")
+    print(labes_test)
+    print("step %d, training accuracy %g"%(i,compute_accuracy(image_test, labes_test)))  #利用测试集的数据计算分类精确度
 
-
-'''
-# Pick 10 random images
-sample_indexes = random.sample(range(len(images32)), 10)
-sample_images = [images32[i] for i in sample_indexes]
-sample_labels = [labels[i] for i in sample_indexes]
-
-# Run the "prediction" op.
-predicted = session.run([prediction],
-                        feed_dict={images_ph: sample_images, keep_prob: 1})
-print(sample_labels)
-print(predicted)
-'''
-
-'''
-# Display the predictions and the ground truth visually.
-fig = plt.figure(figsize=(10, 10))
-for i in range(len(sample_images)):
-    truth = sample_labels[i]
-    prediction_t = predicted[i]
-    plt.subplot(5, 2,1+i)
-    plt.axis('off')
-    color='green' if truth == prediction else 'red'
-    plt.text(40, 10, "Truth:        {0}\nPrediction: {1}".format(truth, prediction_t),
-             fontsize=12, color=color)
-    plt.imshow(sample_images[i])
-plt.show()
-'''
 session.close()
-
