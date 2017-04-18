@@ -30,10 +30,10 @@ def load_data(data_dir):
     return images, labels
 
 # Load training and testing datasets.
-#train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
-#test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
-train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Training")
-test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Testing")
+train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
+test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
+#train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Training")
+#test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Testing")
 # train_data_dir = os.path.join("D:\\project\\traffic\\", "Training")
 # test_data_dir = os.path.join("D:\\project\\traffic\\", "Testing")
 
@@ -73,8 +73,8 @@ def batch(images,lanels,n):
     sample_indexes = random.sample(range(len(images)), n)
     sample_images = [images[i] for i in sample_indexes]
     label_s = [lanels[i] for i in sample_indexes]
-    print("选择标签")
-    print(label_s)
+   # print("选择标签")
+   # print(label_s)
     sample_labels = labelsToMatrix(label_s,len(label_s))
     return sample_images,sample_labels
 
@@ -158,11 +158,12 @@ keep_prob = tf.placeholder(tf.float32)
 # 也就是单个通道输出为32*32，共有32个通道,共有?个批次
 # 在池化阶段，ksize=[1,2,2,1] 那么卷积结果经过池化以后的结果，其尺寸应该是？*16*16*32
 """
-W_conv1 = weight_variable([5,5,3,32]) # patch 5x5, in size 3, out size 32
-b_conv1 = bias_variable([32])
+W_conv1 = weight_variable([5,5,3,64]) # patch 5x5, in size 3, out size 32
+b_conv1 = bias_variable([64])
 h_conv1 = tf.nn.relu(conv2d(images_ph, W_conv1) + b_conv1) # output size 32x32x32
 h_pool1 = max_pool_2x2(h_conv1)                            # output size 16x16x32
-
+norm1 = tf.nn.lrn(h_pool1, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
+                  name='norm1')
 ## conv2 layer ##
 """
 # 第二层
@@ -170,10 +171,12 @@ h_pool1 = max_pool_2x2(h_conv1)                            # output size 16x16x3
 # 卷积前图像的尺寸为 ?*16*16*32， 卷积后为?*16*16*64
 # 池化后，输出的图像尺寸为?*8*8*64
 """
-W_conv2 = weight_variable([5,5, 32, 64]) # patch 5x5, in size 32, out size 64
+W_conv2 = weight_variable([5,5,64,64]) # patch 5x5, in size 32, out size 64
 b_conv2 = bias_variable([64])
-h_conv2 = tf.nn.relu(conv2d(h_pool1, W_conv2) + b_conv2) # output size 16x16x64
-h_pool2 = max_pool_2x2(h_conv2)                          # output size 8x8x64
+h_conv2 = tf.nn.relu(conv2d(norm1, W_conv2) + b_conv2) # output size 16x16x64
+norm2 = tf.nn.lrn(h_conv2, 4, bias=1.0, alpha=0.001 / 9.0, beta=0.75,
+                  name='norm2')
+h_pool2 = max_pool_2x2(norm2)                          # output size 8x8x64
 
 ## fc1 layer ##
 # 第三层 是个全连接层,输入维数8*8*64, 输出维数为2048
@@ -213,13 +216,13 @@ else:
 session.run(init)
 
 for i in range(20):
-    image_train,labels_train = batch(images32,labels,100)   #从训练集中随机选取100张图片
-    print("训练数据")
-    print(labels_train)
+    image_train,labels_train = batch(images32,labels,1000)   #从训练集中随机选取100张图片
+    #print("训练数据")
+    #print(labels_train)
     session.run(train_step, feed_dict={images_ph: image_train, labels_ph: labels_train, keep_prob: 1})   #利用训练集的数据训练模型
-    image_test, labes_test = batch(test_images32, test_labels,100)  # 从测试集中随机选取100张图片
-    print("测试数据")
-    print(labes_test)
+    image_test, labes_test = batch(test_images32, test_labels,1000)  # 从测试集中随机选取100张图片
+    #print("测试数据")
+    #print(labes_test)
     print("step %d, training accuracy %g"%(i,compute_accuracy(image_test, labes_test)))  #利用测试集的数据计算分类精确度
 
 session.close()

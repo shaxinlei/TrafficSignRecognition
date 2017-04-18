@@ -85,13 +85,13 @@ with graph.as_default():
     # Fully connected layer.
     # Generates logits of size [None, 62]
     logits = tf.contrib.layers.fully_connected(images_flat, 62, tf.nn.relu)
-    print("logits")
-    print(logits)
+    #print("logits")
+    #print(logits)
     # Convert logits to label indexes (int).
     # Shape [None], which is a 1D vector of length == batch_size.
     predicted_labels = tf.argmax(logits, 1)
-    print("predicted_labels")
-    print(predicted_labels)
+    #print("predicted_labels")
+   # print(predicted_labels)
 
     # Define the loss function.
     # Cross-entropy is a good choice for classification.
