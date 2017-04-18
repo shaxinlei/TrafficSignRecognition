@@ -33,12 +33,11 @@ def load_data(data_dir):
 
 
 # Load training and testing datasets.
-# ROOT_PATH = "\traffic\"
-# train_data_dir = os.path.join(ROOT_PATH, "datasets\BelgiumTS\Training")
-# test_data_dir = os.path.join(ROOT_PATH, "datasets\BelgiumTS\Testing")
 
-train_data_dir = os.path.join("C:\\Users\\sxl\Desktop\\traffic-signs-tensorflow\\datasets","Training")
-test_data_dir = os.path.join("C:\\Users\\sxl\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
+train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Training")
+test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Testing")
+#train_data_dir = os.path.join("C:\\Users\\sxl\Desktop\\traffic-signs-tensorflow\\datasets","Training")
+#test_data_dir = os.path.join("C:\\Users\\sxl\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
 #train_data_dir = os.path.join("D:\\project\\traffic\\", "Training")
 #test_data_dir = os.path.join("D:\\project\\traffic\\", "Testing")
 
@@ -85,8 +84,8 @@ with graph.as_default():
     # Fully connected layer.
     # Generates logits of size [None, 62]
     logits = tf.contrib.layers.fully_connected(images_flat, 62, tf.nn.relu)
-    #print("logits")
-    #print(logits)
+    print("logits")
+    print(logits)
     # Convert logits to label indexes (int).
     # Shape [None], which is a 1D vector of length == batch_size.
     predicted_labels = tf.argmax(logits, 1)
