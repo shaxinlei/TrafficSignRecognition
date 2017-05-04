@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
-def load_data(data_dir):  
+def load_data(data_dir):
     # 加载数据集并返回两个列表：
     # images：Numpy数组的列表，每个数组表示图像.
     # labels：表示图像标签的数字列表。
@@ -29,8 +29,10 @@ def load_data(data_dir):
     return images, labels
 
 # 加载 training and testing 数据集.
-train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
-test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
+#train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
+#test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
+train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets", "Training")
+test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets", "Testing")
 
 #从数据集中随机选择n张图片
 def batch(images,labels,n):
@@ -233,10 +235,12 @@ print("\n************Caculate the accuracy of test data**************")
 print("\n")
 print("\n")
 print("测试数据")
-print(labels_test_all)
+for i in labels_test_all:
+    print(i," ",end="")
 predicted_all = session.run([predicted_labels],feed_dict={images_ph:images_test_all})[0]
-print("预测数据")
-print(predicted_all)
+print("\n预测数据")
+for i in predicted_all:
+    print(i," ",end="")
 match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
 accuracy = match_count_all/ len(labels_test_all)
 print("All test images' accuracy: {0}".format(accuracy))
