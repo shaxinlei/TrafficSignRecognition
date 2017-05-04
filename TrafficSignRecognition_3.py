@@ -229,6 +229,19 @@ for i in range(100):   # 对模型进行训练
     accuracy = match_count / len(labels_test)
     print("Accuracy: {0},    Loss:{1}".format(accuracy,loss_value))
 
+print("\n************Caculate the accuracy of test data**************")
+print("\n")
+print("\n")
+print("测试数据")
+print(labels_test_all)
+predicted_all = session.run([predicted_labels],feed_dict={images_ph:images_test_all})[0]
+print("预测数据")
+print(predicted_all)
+match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
+accuracy = match_count_all/ len(labels_test_all)
+print("All test images' accuracy: {0}".format(accuracy))
+
+
 '''
 for i in range(10):
     print("================================================================")
