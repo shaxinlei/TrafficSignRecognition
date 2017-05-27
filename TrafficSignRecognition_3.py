@@ -158,7 +158,7 @@ with tf.name_scope('pool2_layer'):
     h_pool2 = max_pool_2x2(h_conv2)                          # output size 8x8x64
 
 ## fc1 layer ##
-# 第三层 是个全连接层,输入维数8*8*64, 输出维数为2048
+# 第三层 是个全连接层,输入维数8*8*64, 输出维数为1024
 with tf.name_scope('layer3'):
     with tf.name_scope('Weights'):
         W_fc1 = weight_variable([8*8*64,1024])  #扁平化
@@ -235,18 +235,20 @@ print("\n************Caculate the accuracy of test data**************")
 print("\n")
 print("\n")
 print("测试数据")
+print("num_of_testData:{0}".format(images_test_all))
 for i in labels_test_all:
     print(i," ",end="")
+
 predicted_all = session.run([predicted_labels],feed_dict={images_ph:images_test_all})[0]
 print("\n预测数据")
 for i in predicted_all:
     print(i," ",end="")
 match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
 accuracy = match_count_all/ len(labels_test_all)
-print("All test images' accuracy: {0}".format(accuracy))
+print("\nAll test images' accuracy: {0}".format(accuracy))
 
 
-'''
+
 for i in range(10):
     print("================================================================")
     sample_images, sample_labels = batch(test_images32, test_labels, 10)  # 从测试集中随机选取10张图片
@@ -264,7 +266,6 @@ for i in range(10):
                  fontsize=12, color=color)
         plt.imshow(sample_images[i])
     plt.show()
-'''
 
 
 #session.close()
