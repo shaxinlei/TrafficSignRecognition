@@ -212,9 +212,9 @@ writer = tf.summary.FileWriter("logs/",session.graph)
 session.run(init)    # 在session里面运行模型，并且进行初始化
 
 for i in range(100):   # 对模型进行训练
-    image_train,labels_train = batch(images32,labels,128)   #从训练集中随机选取128张图片
+    #images_train,labels_train = batch(images32,labels,128)   #从训练集中随机选取128张图片
 
-    _,loss_value,result = session.run([train_step,loss,merged], feed_dict={images_ph: image_train, labels_ph: labels_train})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
+    _,loss_value,result = session.run([train_step,loss,merged], feed_dict={images_ph: images_train_all, labels_ph: labels_train_all})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
     #print("step: %d" %i)
     print("Step: {0}" .format(i))
     writer.add_summary(result,i)
@@ -235,7 +235,7 @@ print("\n************Caculate the accuracy of test data**************")
 print("\n")
 print("\n")
 print("测试数据")
-print("num_of_testData:{0}".format(images_test_all))
+print("num_of_testData:{0}".format(len(images_test_all)))
 for i in labels_test_all:
     print(i," ",end="")
 
@@ -246,7 +246,6 @@ for i in predicted_all:
 match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
 accuracy = match_count_all/ len(labels_test_all)
 print("\nAll test images' accuracy: {0}".format(accuracy))
-
 
 
 for i in range(10):
@@ -266,6 +265,5 @@ for i in range(10):
                  fontsize=12, color=color)
         plt.imshow(sample_images[i])
     plt.show()
-
 
 #session.close()
