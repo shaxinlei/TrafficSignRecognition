@@ -30,12 +30,8 @@ def load_data(data_dir):
     return images, labels
 
 # Load training and testing datasets.
-#train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
-#test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
-train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Training")
-test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets","Testing")
-# train_data_dir = os.path.join("D:\\project\\traffic\\", "Training")
-# test_data_dir = os.path.join("D:\\project\\traffic\\", "Testing")
+train_data_dir = os.path.join(".\dataset", "Training")
+test_data_dir = os.path.join(".\dataset", "Testing")
 
 #加载训练数据集
 images, labels = load_data(train_data_dir)

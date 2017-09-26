@@ -29,12 +29,8 @@ def load_data(data_dir):
     return images, labels
 
 # 加载 training and testing 数据集.
-train_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Training")
-test_data_dir = os.path.join("C:\\Users\\sxl\\Desktop\\traffic-signs-tensorflow\\datasets","Testing")
-
-#train_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets", "Training")
-
-#test_data_dir = os.path.join("C:\\temp\\traffic-signs-tensorflow\\datasets", "Testing")
+train_data_dir = os.path.join(".\dataset", "Training")
+test_data_dir = os.path.join(".\dataset", "Testing")
 
 
 #从数据集中随机选择n张图片
