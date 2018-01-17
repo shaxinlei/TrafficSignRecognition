@@ -43,8 +43,9 @@ def readTrafficSigns_test(rootpath):
     # loop over all images in current annotations file
     for row in gtReader:
         images.append(plt.imread(rootpath + '/' + row[0]))  # the 1th column is the filename
+        labels.append(row[7])
     gtFile.close()
-    return images
+    return images, labels
 
 
 # 从数据集中随机选择n张图片
@@ -61,17 +62,19 @@ def batch(images, labels, n):
 images, labels = readTrafficSigns_train('./dataset/German/Training')
 
 # 调整图像大小
-images32 = [skimage.transform.resize(image, (32, 32)) for image in images]
+images32 = [skimage.transform.resize(image, (32, 32))
+                for image in images]
 labels_train_all = np.array(labels)
 images_train_all = np.array(images32)
 
 # 加载测试数据集
-test_images = readTrafficSigns_test('./dataset/German/Testing')
+test_images, test_labels = readTrafficSigns_test('./dataset/German/Testing')
 
 # 调整图像大小
 test_images32 = [skimage.transform.resize(image, (32, 32))
                  for image in test_images]
 images_test_all = np.array(test_images32)
+labels_test_all = np.array(test_labels)
 
 # 加载数据集end
 # ===============================================================================
@@ -233,7 +236,7 @@ for i in range(100):   # 对模型进行训练
     # print("step: %d" %i)
     print("Step: {0}" .format(i))
     writer.add_summary(result, i)
-'''
+
     image_test, labels_test = batch(test_images32, test_labels, 128)  # 从测试集中随机选取128张图片
     # print("测试数据")
     # print(labels_test)
@@ -245,19 +248,22 @@ for i in range(100):   # 对模型进行训练
     match_count = sum([int(y == y_) for y, y_ in zip(labels_test, predicted)])
     accuracy = match_count / len(labels_test)
     print("Accuracy: {0},    Loss:{1}".format(accuracy, loss_value))
-'''
+
 
 print("\n************Caculate the accuracy of test data**************")
 print("\n")
 print("\n")
 print("测试数据")
 print("num_of_testData:{0}".format(len(images_test_all)))
-labels_test_all = []
+for i in labels_test_all:
+    print(i," ",end="")
 predicted_all = session.run([predicted_labels], feed_dict={images_ph: images_test_all, labels_ph: labels_test_all})[0]
 print("\n预测数据")
 for i in predicted_all:
     print(i, " ", end="")
-
+match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
+accuracy = match_count_all/ len(labels_test_all)
+print("\nAll test images' accuracy: {0}".format(accuracy))
 
 '''
 for i in range(10):
