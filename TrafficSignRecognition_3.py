@@ -6,15 +6,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
+
 def load_data(data_dir):
     # 加载数据集并返回两个列表：
     # images：Numpy数组的列表，每个数组表示图像.
     # labels：表示图像标签的数字列表。
     # 获取data_dir的所有子目录，每个子目录代表一个标签.
-    directories = [d for d in os.listdir(data_dir)    #os.listdir:获得目录内容
-                   if os.path.isdir(os.path.join(data_dir, d))]    #os.path.isdir:判断某一路径是否为目录   os.path.join:拼接路径
-    #循环标签目录并收集数据
-    #两个列表，标签和图像
+    directories = [d for d in os.listdir(data_dir)    # os.listdir:获得目录内容
+                   if os.path.isdir(os.path.join(data_dir, d))]    # os.path.isdir:判断某一路径是否为目录   os.path.join:拼接路径
+    # 循环标签目录并收集数据
+    # 两个列表，标签和图像
     labels = []
     images = []
     for d in directories:
@@ -29,20 +30,21 @@ def load_data(data_dir):
     return images, labels
 
 # 加载 training and testing 数据集.
-train_data_dir = os.path.join(".\dataset", "Training")
-test_data_dir = os.path.join(".\dataset", "Testing")
+train_data_dir = os.path.join("./dataset", "Training")
+test_data_dir = os.path.join("./dataset", "Testing")
 
-#从数据集中随机选择n张图片
-def batch(images,labels,n):
-    sample_indexes = random.sample(range(len(images)), n)  #random.sample:从指定的序列中，随机的截取指定长度的片断，不作原地修改
+
+# 从数据集中随机选择n张图片
+def batch(images, labels, n):
+    sample_indexes = random.sample(range(len(images)), n)  # random.sample:从指定的序列中，随机的截取指定长度的片断，不作原地修改
     sample_images = [images[i] for i in sample_indexes]
     label_s = [labels[i] for i in sample_indexes]
     return sample_images,label_s
 
-##===============================================================================##
-                                    ##start加载数据集##
+# ===============================================================================
+# start加载数据集
 
-#加载训练数据集
+# 加载训练数据集
 images, labels = load_data(train_data_dir)
 
 # 调整图像大小
@@ -51,7 +53,7 @@ images32 = [skimage.transform.resize(image, (32, 32))
 labels_train_all = np.array(labels)
 images_train_all = np.array(images32)
 
-#加载测试数据集
+# 加载测试数据集
 test_images, test_labels = load_data(test_data_dir)
 
 # 调整图像大小
@@ -60,20 +62,22 @@ test_images32 = [skimage.transform.resize(image, (32, 32))
 images_test_all = np.array(test_images32)
 labels_test_all = np.array(test_labels)
 
-                                 ##加载数据集end##
-##===============================================================================##
+# 加载数据集end
+# ===============================================================================
 
 
-##===============================================================================##
-                                ##定义构建卷积神经网络的函数##
+# ===============================================================================
+# 定义构建卷积神经网络的函数
 
 def weight_variable(shape):
     initial = tf.truncated_normal(shape, stddev=0.1)  # 返回一个tensor其中的元素服从截断正态分布，标准差为0.1
-    return tf.Variable(initial,name = "W")
+    return tf.Variable(initial, name="W")
+
 
 def bias_variable(shape):
     initial = tf.constant(0.1, shape=shape)    # 生成常量tensor ，值为0.1
-    return tf.Variable(initial,name = "b")
+    return tf.Variable(initial, name="b")
+
 
 def conv2d(x, W):
     """
@@ -87,7 +91,8 @@ def conv2d(x, W):
        """
     # stride [1, x_movement, y_movement, 1]
     # Must have strides[0] = strides[3] = 1
-    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')   #进行卷积操作，步长为1,padding为SAME
+    return tf.nn.conv2d(x, W, strides=[1, 1, 1, 1], padding='SAME')   # 进行卷积操作，步长为1,padding为SAME
+
 
 def max_pool_2x2(x):
     """
@@ -99,20 +104,20 @@ def max_pool_2x2(x):
     padding: 与conv2d中用法一样。
     """
     # stride [1, x_movement, y_movement, 1]
-    return tf.nn.max_pool(x, ksize=[1,2,2,1], strides=[1,2,2,1], padding='SAME')    #进行池化操作，池化窗口大小为[1,2,2,1],窗口步长为[1,2,2,1]
+    return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')    # 进行池化操作，池化窗口大小为[1,2,2,1],窗口步长为[1,2,2,1]
 
-##===============================================================================##
+# ===============================================================================
 
 
-##===============================================================================##
-                                ##start构建卷积神经网络##
+# ===============================================================================
+# start构建卷积神经网络
 
 # Placeholders for inputs and labels.
 with tf.name_scope('inputs'):
-    images_ph = tf.placeholder(tf.float32, [None, 32, 32, 3],name="images_ph")    #输入图像shape为[batch,32,32,3]   32*32像素 3个通道
+    images_ph = tf.placeholder(tf.float32, [None, 32, 32, 3],name="images_ph")    # 输入图像shape为[batch,32,32,3]   32*32像素 3个通道
     labels_ph = tf.placeholder(tf.int32, [None],name="labels_ph")
 
-## conv1 layer ##
+# conv1 layer
 """
 # 第一层
 # 卷积核(filter)的尺寸是5*5, 通道数为1，输出通道为32，即feature map 数目为32
@@ -122,7 +127,7 @@ with tf.name_scope('inputs'):
 """
 with tf.name_scope('conv1_layer'):
     with tf.name_scope('Weights'):
-        W_conv1 = weight_variable([5,5,3,32]) # patch 5x5, in size 3, out size 32
+        W_conv1 = weight_variable([5, 5, 3, 32]) # patch 5x5, in size 3, out size 32
         tf.summary.histogram('conv1_layer/weights', W_conv1)
     with tf.name_scope('biases'):
         b_conv1 = bias_variable([32])
@@ -134,7 +139,7 @@ with tf.name_scope('conv1_layer'):
 with tf.name_scope('pool1_layer'):
     h_pool1 = max_pool_2x2(h_conv1)                            # output size 16x16x32
 
-## conv2 layer ##
+# conv2 layer
 """
 # 第二层
 # 卷积核5*5，输入通道为32，输出通道为64。
@@ -143,7 +148,7 @@ with tf.name_scope('pool1_layer'):
 """
 with tf.name_scope('conv2_layer'):
     with tf.name_scope('Weights'):
-        W_conv2 = weight_variable([5,5, 32, 64])  # patch 5x5, in size 32, out size 64
+        W_conv2 = weight_variable([5, 5, 32, 64])  # patch 5x5, in size 32, out size 64
         tf.summary.histogram('conv2_layer/weights', W_conv2)
     with tf.name_scope('biases'):
         b_conv2 = bias_variable([64])
@@ -155,11 +160,11 @@ with tf.name_scope('conv2_layer'):
 with tf.name_scope('pool2_layer'):
     h_pool2 = max_pool_2x2(h_conv2)                          # output size 8x8x64
 
-## fc1 layer ##
+# fc1 layer
 # 第三层 是个全连接层,输入维数8*8*64, 输出维数为1024
 with tf.name_scope('layer3'):
     with tf.name_scope('Weights'):
-        W_fc1 = weight_variable([8*8*64,1024])  #扁平化
+        W_fc1 = weight_variable([8*8*64, 1024])  #扁平化
         tf.summary.histogram('layer3/weights', W_fc1)
     with tf.name_scope('biases'):
         b_fc1 = bias_variable([1024])
@@ -167,11 +172,11 @@ with tf.name_scope('layer3'):
     # [n_samples, 8, 8, 64] ->> [n_samples, 8*8*64]
     h_pool2_flat = tf.reshape(h_pool2, [-1, 8*8*64])
     with tf.name_scope('Wx_plus_b'):
-        h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)   #tf.matmul：矩阵相乘
+        h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)   # tf.matmul：矩阵相乘
         tf.summary.histogram('layer3/outputs', h_fc1)
 
 
-## fc2 layer ##
+# fc2 layer
 # 第四层，输入1024维，输出62维，也就是具体的0~61分类
 with tf.name_scope('layer4'):
     with tf.name_scope('Weights'):
@@ -184,24 +189,24 @@ with tf.name_scope('layer4'):
         logits = tf.add(tf.matmul(h_fc1, W_fc2) , b_fc2)
         tf.summary.histogram('layer4/outputs', logits)
 
-                                    ##神经网络构建end##
-##===============================================================================##
+# 神经网络构建end
+# ===============================================================================
 
 
 predicted_labels = tf.argmax(logits, 1)   # 返回某一维度的最大值
-xlabels = tf.cast(labels_ph,tf.int64)      #强制转化，将float转化为int
+xlabels = tf.cast(labels_ph,tf.int64)      # 强制转化，将float转化为int
 with tf.name_scope('loss'):
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=xlabels,logits=logits))
     tf.summary.scalar('loss', loss)
 with tf.name_scope('train_step'):
-    train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)   #使用adam优化
+    train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)   # 使用adam优化
 
 # 创建一个session来运行我们创建的图.
 session = tf.Session()
 if int((tf.__version__).split('.')[1]) < 12 and int((tf.__version__).split('.')[0]) < 1:
     init = tf.initialize_all_variables()
 else:
-    init = tf.global_variables_initializer()   #不同版本的TensorFlow有不同的参数初始化方法
+    init = tf.global_variables_initializer()   # 不同版本的TensorFlow有不同的参数初始化方法
 
 merged = tf.summary.merge_all()
 writer = tf.summary.FileWriter("logs/",session.graph)
@@ -210,24 +215,24 @@ writer = tf.summary.FileWriter("logs/",session.graph)
 session.run(init)    # 在session里面运行模型，并且进行初始化
 
 for i in range(100):   # 对模型进行训练
-    #images_train,labels_train = batch(images32,labels,128)   #从训练集中随机选取128张图片
+    # images_train,labels_train = batch(images32,labels,128)   #从训练集中随机选取128张图片
 
-    _,loss_value,result = session.run([train_step,loss,merged], feed_dict={images_ph: images_train_all, labels_ph: labels_train_all})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
-    #print("step: %d" %i)
+    _, loss_value,result = session.run([train_step, loss, merged], feed_dict={images_ph: images_train_all, labels_ph: labels_train_all})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
+    # print("step: %d" %i)
     print("Step: {0}" .format(i))
     writer.add_summary(result,i)
 
-    image_test, labels_test = batch(test_images32, test_labels,128)  # 从测试集中随机选取128张图片
-    #print("测试数据")
-    #print(labels_test)
+    image_test, labels_test = batch(test_images32, test_labels, 128)  # 从测试集中随机选取128张图片
+    # print("测试数据")
+    # print(labels_test)
     predicted = session.run([predicted_labels],
                             feed_dict={images_ph: image_test})[0]
-    #print("预测数据")
-    #print(predicted)
+    # print("预测数据")
+    # print(predicted)
     # 计算得到匹配的数量.
     match_count = sum([int(y == y_) for y, y_ in zip(labels_test, predicted)])
     accuracy = match_count / len(labels_test)
-    print("Accuracy: {0},    Loss:{1}".format(accuracy,loss_value))
+    print("Accuracy: {0},    Loss:{1}".format(accuracy, loss_value))
 
 print("\n************Caculate the accuracy of test data**************")
 print("\n")
@@ -252,7 +257,7 @@ for i in range(10):
     predicted = session.run([predicted_labels],
                             feed_dict={images_ph: sample_images})[0]
     # Display the predictions and the ground truth visually.
-    fig = plt.figure(figsize=(10, 10))   #在10英寸*10英寸 的画布上画图
+    fig = plt.figure(figsize=(10, 10))   # 在10英寸*10英寸 的画布上画图
     for i in range(len(sample_images)):
         truth = sample_labels[i]
         prediction = predicted[i]
@@ -264,4 +269,4 @@ for i in range(10):
         plt.imshow(sample_images[i])
     plt.show()
 
-#session.close()
+# session.close()
