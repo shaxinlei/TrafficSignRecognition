@@ -1,37 +1,50 @@
-import os
+import csv
 import random
+import numpy as np
+import matplotlib.pyplot as plt
 import skimage.data
 import skimage.transform
-import matplotlib.pyplot as plt
-import numpy as np
 import tensorflow as tf
 
 
-def load_data(data_dir):
-    # 加载数据集并返回两个列表：
-    # images：Numpy数组的列表，每个数组表示图像.
-    # labels：表示图像标签的数字列表。
-    # 获取data_dir的所有子目录，每个子目录代表一个标签.
-    directories = [d for d in os.listdir(data_dir)    # os.listdir:获得目录内容
-                   if os.path.isdir(os.path.join(data_dir, d))]    # os.path.isdir:判断某一路径是否为目录   os.path.join:拼接路径
-    # 循环标签目录并收集数据
-    # 两个列表，标签和图像
-    labels = []
-    images = []
-    for d in directories:
-        label_dir = os.path.join(data_dir, d)
-        file_names = [os.path.join(label_dir, f)
-                      for f in os.listdir(label_dir) if f.endswith(".ppm")]
-        # 对于每个label，加载它的图像，并将它们添加到image列表。
-        # 将标签号（即目录名）添加到标签列表中.
-        for f in file_names:
-            images.append(skimage.data.imread(f))
-            labels.append(int(d))
+# function for reading the images
+# arguments: path to the traffic sign data, for example './GTSRB/Training'
+# returns: list of images, list of corresponding labels
+def readTrafficSigns_train(rootpath):
+    '''Reads traffic sign data for German Traffic Sign Recognition Benchmark.
+
+    Arguments: path to the traffic sign data, for example './GTSRB/Training'
+    Returns:   list of images, list of corresponding labels'''
+    images = [] # images
+    labels = [] # corresponding labels
+    # loop over all 42 classes
+    for c in range(0, 43):
+        prefix = rootpath + '/' + format(c, '05d') + '/'            # subdirectory for class
+        gtFile = open(prefix + 'GT-' + format(c, '05d') + '.csv')   # annotations file
+        gtReader = csv.reader(gtFile, delimiter=';')                # csv parser for annotations file
+        next(gtReader)  # skip header
+        # loop over all images in current annotations file
+        for row in gtReader:
+            images.append(plt.imread(prefix + row[0]))              # the 1th column is the filename
+            labels.append(row[7])                                   # the 8th column is the label
+        gtFile.close()
     return images, labels
 
-# 加载 training and testing 数据集.
-train_data_dir = os.path.join("./dataset", "Training")
-test_data_dir = os.path.join("./dataset", "Testing")
+
+def readTrafficSigns_test(rootpath):
+    '''Reads traffic sign data for German Traffic Sign Recognition Benchmark.
+
+    Arguments: path to the traffic sign data, for example './GTSRB/Training'
+    Returns:   list of images'''
+    images = []  # images
+    gtFile = open(rootpath + '/' + 'GT-final_test.csv')
+    gtReader = csv.reader(gtFile, delimiter=';')  # csv parser for annotations file
+    next(gtReader)  # skip header
+    # loop over all images in current annotations file
+    for row in gtReader:
+        images.append(plt.imread(rootpath + '/' + row[0]))  # the 1th column is the filename
+    gtFile.close()
+    return images
 
 
 # 从数据集中随机选择n张图片
@@ -39,28 +52,26 @@ def batch(images, labels, n):
     sample_indexes = random.sample(range(len(images)), n)  # random.sample:从指定的序列中，随机的截取指定长度的片断，不作原地修改
     sample_images = [images[i] for i in sample_indexes]
     label_s = [labels[i] for i in sample_indexes]
-    return sample_images,label_s
+    return sample_images, label_s
 
 # ===============================================================================
 # start加载数据集
 
 # 加载训练数据集
-images, labels = load_data(train_data_dir)
+images, labels = readTrafficSigns_train('./dataset/German/Training')
 
 # 调整图像大小
-images32 = [skimage.transform.resize(image, (32, 32))
-                for image in images]
+images32 = [skimage.transform.resize(image, (32, 32)) for image in images]
 labels_train_all = np.array(labels)
 images_train_all = np.array(images32)
 
 # 加载测试数据集
-test_images, test_labels = load_data(test_data_dir)
+test_images = readTrafficSigns_test('./dataset/German/Testing')
 
 # 调整图像大小
 test_images32 = [skimage.transform.resize(image, (32, 32))
                  for image in test_images]
 images_test_all = np.array(test_images32)
-labels_test_all = np.array(test_labels)
 
 # 加载数据集end
 # ===============================================================================
@@ -114,8 +125,8 @@ def max_pool_2x2(x):
 
 # Placeholders for inputs and labels.
 with tf.name_scope('inputs'):
-    images_ph = tf.placeholder(tf.float32, [None, 32, 32, 3],name="images_ph")    # 输入图像shape为[batch,32,32,3]   32*32像素 3个通道
-    labels_ph = tf.placeholder(tf.int32, [None],name="labels_ph")
+    images_ph = tf.placeholder(tf.float32, [None, 32, 32, 3], name="images_ph")    # 输入图像shape为[batch,32,32,3]   32*32像素 3个通道
+    labels_ph = tf.placeholder(tf.int32, [None], name="labels_ph")
 
 # conv1 layer
 """
@@ -127,13 +138,13 @@ with tf.name_scope('inputs'):
 """
 with tf.name_scope('conv1_layer'):
     with tf.name_scope('Weights'):
-        W_conv1 = weight_variable([5, 5, 3, 32]) # patch 5x5, in size 3, out size 32
+        W_conv1 = weight_variable([5, 5, 3, 32])  # patch 5x5, in size 3, out size 32
         tf.summary.histogram('conv1_layer/weights', W_conv1)
     with tf.name_scope('biases'):
         b_conv1 = bias_variable([32])
         tf.summary.histogram('conv1_layer/biases', b_conv1)
     with tf.name_scope('conv1'):
-        h_conv1 = tf.nn.relu(conv2d(images_ph, W_conv1) + b_conv1) # 非线性处理 output size 32x32x32
+        h_conv1 = tf.nn.relu(conv2d(images_ph, W_conv1) + b_conv1)  # 非线性处理 output size 32x32x32
         tf.summary.histogram('conv1_layer/outputs', h_conv1)
 
 with tf.name_scope('pool1_layer'):
@@ -164,7 +175,7 @@ with tf.name_scope('pool2_layer'):
 # 第三层 是个全连接层,输入维数8*8*64, 输出维数为1024
 with tf.name_scope('layer3'):
     with tf.name_scope('Weights'):
-        W_fc1 = weight_variable([8*8*64, 1024])  #扁平化
+        W_fc1 = weight_variable([8*8*64, 1024])  # 扁平化
         tf.summary.histogram('layer3/weights', W_fc1)
     with tf.name_scope('biases'):
         b_fc1 = bias_variable([1024])
@@ -194,7 +205,7 @@ with tf.name_scope('layer4'):
 
 
 predicted_labels = tf.argmax(logits, 1)   # 返回某一维度的最大值
-xlabels = tf.cast(labels_ph,tf.int64)      # 强制转化，将float转化为int
+xlabels = tf.cast(labels_ph, tf.int64)      # 强制转化，将float转化为int
 with tf.name_scope('loss'):
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=xlabels,logits=logits))
     tf.summary.scalar('loss', loss)
@@ -215,13 +226,14 @@ writer = tf.summary.FileWriter("logs/",session.graph)
 session.run(init)    # 在session里面运行模型，并且进行初始化
 
 for i in range(100):   # 对模型进行训练
-    # images_train,labels_train = batch(images32,labels,128)   #从训练集中随机选取128张图片
-
-    _, loss_value,result = session.run([train_step, loss, merged], feed_dict={images_ph: images_train_all, labels_ph: labels_train_all})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
+    images_train, labels_train = batch(images32, labels, 128)   # 从训练集中随机选取128张图片
+    # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
+    _, loss_value, result = session.run([train_step, loss, merged], feed_dict={
+                                                                    images_ph: images_train, labels_ph: labels_train})
     # print("step: %d" %i)
     print("Step: {0}" .format(i))
-    writer.add_summary(result,i)
-
+    writer.add_summary(result, i)
+'''
     image_test, labels_test = batch(test_images32, test_labels, 128)  # 从测试集中随机选取128张图片
     # print("测试数据")
     # print(labels_test)
@@ -233,24 +245,21 @@ for i in range(100):   # 对模型进行训练
     match_count = sum([int(y == y_) for y, y_ in zip(labels_test, predicted)])
     accuracy = match_count / len(labels_test)
     print("Accuracy: {0},    Loss:{1}".format(accuracy, loss_value))
+'''
 
 print("\n************Caculate the accuracy of test data**************")
 print("\n")
 print("\n")
 print("测试数据")
 print("num_of_testData:{0}".format(len(images_test_all)))
-for i in labels_test_all:
-    print(i," ",end="")
-
-predicted_all = session.run([predicted_labels],feed_dict={images_ph:images_test_all})[0]
+labels_test_all = []
+predicted_all = session.run([predicted_labels], feed_dict={images_ph: images_test_all, labels_ph: labels_test_all})[0]
 print("\n预测数据")
 for i in predicted_all:
-    print(i," ",end="")
-match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
-accuracy = match_count_all/ len(labels_test_all)
-print("\nAll test images' accuracy: {0}".format(accuracy))
+    print(i, " ", end="")
 
 
+'''
 for i in range(10):
     print("================================================================")
     sample_images, sample_labels = batch(test_images32, test_labels, 10)  # 从测试集中随机选取10张图片
@@ -268,5 +277,5 @@ for i in range(10):
                  fontsize=12, color=color)
         plt.imshow(sample_images[i])
     plt.show()
-
+'''
 # session.close()
