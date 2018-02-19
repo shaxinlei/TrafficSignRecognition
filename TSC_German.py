@@ -37,6 +37,7 @@ def readTrafficSigns_test(rootpath):
     Arguments: path to the traffic sign data, for example './GTSRB/Training'
     Returns:   list of images'''
     images = []  # images
+    labels = []  # 对应的标签
     gtFile = open(rootpath + '/' + 'GT-final_test.csv')
     gtReader = csv.reader(gtFile, delimiter=';')  # csv parser for annotations file
     next(gtReader)  # skip header
@@ -55,11 +56,11 @@ def batch(images, labels, n):
     label_s = [labels[i] for i in sample_indexes]
     return sample_images, label_s
 
-# ===============================================================================
 # start加载数据集
 
 # 加载训练数据集
 images, labels = readTrafficSigns_train('./dataset/German/Training')
+labels = list(map(int, labels))    # str列表转为int列表
 
 # 调整图像大小
 images32 = [skimage.transform.resize(image, (32, 32))
@@ -69,6 +70,7 @@ images_train_all = np.array(images32)
 
 # 加载测试数据集
 test_images, test_labels = readTrafficSigns_test('./dataset/German/Testing')
+test_labels = list(map(int, test_labels))
 
 # 调整图像大小
 test_images32 = [skimage.transform.resize(image, (32, 32))
@@ -77,10 +79,7 @@ images_test_all = np.array(test_images32)
 labels_test_all = np.array(test_labels)
 
 # 加载数据集end
-# ===============================================================================
 
-
-# ===============================================================================
 # 定义构建卷积神经网络的函数
 
 def weight_variable(shape):
@@ -120,10 +119,6 @@ def max_pool_2x2(x):
     # stride [1, x_movement, y_movement, 1]
     return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding='SAME')    # 进行池化操作，池化窗口大小为[1,2,2,1],窗口步长为[1,2,2,1]
 
-# ===============================================================================
-
-
-# ===============================================================================
 # start构建卷积神经网络
 
 # Placeholders for inputs and labels.
@@ -191,21 +186,19 @@ with tf.name_scope('layer3'):
 
 
 # fc2 layer
-# 第四层，输入1024维，输出62维，也就是具体的0~61分类
+# 第四层，输入1024维，输出43维，也就是具体的0~42分类
 with tf.name_scope('layer4'):
     with tf.name_scope('Weights'):
-        W_fc2 = weight_variable([1024, 62])
+        W_fc2 = weight_variable([1024, 43])
         tf.summary.histogram('layer4/weights', W_fc2)
     with tf.name_scope('biases'):
-        b_fc2 = bias_variable([62])
+        b_fc2 = bias_variable([43])
         tf.summary.histogram('layer4/biases', b_fc2)
     with tf.name_scope('Wx_plus_b'):
         logits = tf.add(tf.matmul(h_fc1, W_fc2) , b_fc2)
         tf.summary.histogram('layer4/outputs', logits)
 
 # 神经网络构建end
-# ===============================================================================
-
 
 predicted_labels = tf.argmax(logits, 1)   # 返回某一维度的最大值
 xlabels = tf.cast(labels_ph, tf.int64)      # 强制转化，将float转化为int
@@ -238,32 +231,32 @@ for i in range(100):   # 对模型进行训练
     writer.add_summary(result, i)
 
     image_test, labels_test = batch(test_images32, test_labels, 128)  # 从测试集中随机选取128张图片
-    # print("测试数据")
-    # print(labels_test)
+    print("测试数据")
+    print(labels_test)
     predicted = session.run([predicted_labels],
                             feed_dict={images_ph: image_test})[0]
-    # print("预测数据")
-    # print(predicted)
+    print("预测数据")
+    print(predicted)
     # 计算得到匹配的数量.
     match_count = sum([int(y == y_) for y, y_ in zip(labels_test, predicted)])
     accuracy = match_count / len(labels_test)
     print("Accuracy: {0},    Loss:{1}".format(accuracy, loss_value))
 
 
-print("\n************Caculate the accuracy of test data**************")
-print("\n")
-print("\n")
-print("测试数据")
-print("num_of_testData:{0}".format(len(images_test_all)))
-for i in labels_test_all:
-    print(i," ",end="")
-predicted_all = session.run([predicted_labels], feed_dict={images_ph: images_test_all, labels_ph: labels_test_all})[0]
-print("\n预测数据")
-for i in predicted_all:
-    print(i, " ", end="")
-match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
-accuracy = match_count_all/ len(labels_test_all)
-print("\nAll test images' accuracy: {0}".format(accuracy))
+# print("\n************Caculate the accuracy of test data**************")
+# print("\n")
+# print("\n")
+# print("测试数据")
+# print("num_of_testData:{0}".format(len(images_test_all)))
+# for i in labels_test_all:
+#     print(i," ",end="")
+# predicted_all = session.run([predicted_labels], feed_dict={images_ph: images_test_all, labels_ph: labels_test_all})[0]
+# print("\n预测数据")
+# for i in predicted_all:
+#     print(i, " ", end="")
+# match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
+# accuracy = match_count_all/ len(labels_test_all)
+# print("\nAll test images' accuracy: {0}".format(accuracy))
 
 '''
 for i in range(10):
