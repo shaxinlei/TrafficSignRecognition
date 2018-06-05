@@ -25,7 +25,7 @@ def readTrafficSigns_train(rootpath):
         next(gtReader)  # skip header
         # loop over all images in current annotations file
         for row in gtReader:
-            images.append(plt.imread(prefix + row[0]))              # the 1th column is the filename
+            images.append(skimage.data.imread(prefix + row[0]))              # the 1th column is the filename
             labels.append(row[7])                                   # the 8th column is the label
         gtFile.close()
     return images, labels
@@ -42,7 +42,7 @@ def readTrafficSigns_test(rootpath):
     next(gtReader)  # skip header
     # loop over all images in current annotations file
     for row in gtReader:
-        images.append(plt.imread(rootpath + '/' + row[0]))  # the 1th column is the filename
+        images.append(skimage.data.imread(rootpath + '/' + row[0]))  # the 1th column is the filename
         labels.append(row[7])
     gtFile.close()
     return images, labels
@@ -62,8 +62,7 @@ def batch(images, labels, n):
 images, labels = readTrafficSigns_train('./dataset/German/Training')
 
 # 调整图像大小
-images32 = [skimage.transform.resize(image, (32, 32))
-                for image in images]
+images32 = [skimage.transform.resize(image, (32, 32)) for image in images]
 labels_train_all = np.array(labels)
 images_train_all = np.array(images32)
 
@@ -223,7 +222,7 @@ else:
     init = tf.global_variables_initializer()   # 不同版本的TensorFlow有不同的参数初始化方法
 
 merged = tf.summary.merge_all()
-writer = tf.summary.FileWriter("logs/",session.graph)
+writer = tf.summary.FileWriter("logs/", session.graph)
 
 # 第一步始终是初始化所有变量.
 session.run(init)    # 在session里面运行模型，并且进行初始化
@@ -256,7 +255,7 @@ print("\n")
 print("测试数据")
 print("num_of_testData:{0}".format(len(images_test_all)))
 for i in labels_test_all:
-    print(i," ",end="")
+    print(i, " ", end="")
 predicted_all = session.run([predicted_labels], feed_dict={images_ph: images_test_all, labels_ph: labels_test_all})[0]
 print("\n预测数据")
 for i in predicted_all:

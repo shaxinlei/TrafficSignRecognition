@@ -29,6 +29,7 @@ def load_data(data_dir):
             labels.append(int(d))
     return images, labels
 
+
 # 加载 training and testing 数据集.
 train_data_dir = os.path.join("./dataset/Belgium", "Training")
 test_data_dir = os.path.join("./dataset/Belgium", "Testing")
@@ -43,6 +44,7 @@ def batch(images, labels, n):
 
 # ===============================================================================
 # start加载数据集
+
 
 # 加载训练数据集
 images, labels = load_data(train_data_dir)
@@ -191,15 +193,14 @@ with tf.name_scope('layer4'):
 
 # 神经网络构建end
 # ===============================================================================
-
-
+learning_rate = 0.005
 predicted_labels = tf.argmax(logits, 1)   # 返回某一维度的最大值
 xlabels = tf.cast(labels_ph,tf.int64)      # 强制转化，将float转化为int
 with tf.name_scope('loss'):
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels=xlabels,logits=logits))
     tf.summary.scalar('loss', loss)
 with tf.name_scope('train_step'):
-    train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)   # 使用adam优化
+    train_step = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss)   # 使用adam优化
 
 # 创建一个session来运行我们创建的图.
 session = tf.Session()
@@ -209,18 +210,19 @@ else:
     init = tf.global_variables_initializer()   # 不同版本的TensorFlow有不同的参数初始化方法
 
 merged = tf.summary.merge_all()
-writer = tf.summary.FileWriter("logs/",session.graph)
+writer = tf.summary.FileWriter("logs/", session.graph)
 
 # 第一步始终是初始化所有变量.
 session.run(init)    # 在session里面运行模型，并且进行初始化
+loss_list = []
+accuracy_list = []
+for i in range(500):   # 对模型进行训练
+    images_train, labels_train = batch(images32, labels, 128)   #从训练集中随机选取128张图片
 
-for i in range(100):   # 对模型进行训练
-    # images_train,labels_train = batch(images32,labels,128)   #从训练集中随机选取128张图片
-
-    _, loss_value,result = session.run([train_step, loss, merged], feed_dict={images_ph: images_train_all, labels_ph: labels_train_all})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
+    _, loss_value, result = session.run([train_step, loss, merged], feed_dict={images_ph: images_train, labels_ph: labels_train})  # 每次运行train_step时，将之前所选择的数据，填充至所设置的占位符中，作为模型的输入
     # print("step: %d" %i)
     print("Step: {0}" .format(i))
-    writer.add_summary(result,i)
+    writer.add_summary(result, i)
 
     image_test, labels_test = batch(test_images32, test_labels, 128)  # 从测试集中随机选取128张图片
     # print("测试数据")
@@ -232,41 +234,45 @@ for i in range(100):   # 对模型进行训练
     # 计算得到匹配的数量.
     match_count = sum([int(y == y_) for y, y_ in zip(labels_test, predicted)])
     accuracy = match_count / len(labels_test)
-    print("Accuracy: {0},    Loss:{1}".format(accuracy, loss_value))
 
-print("\n************Caculate the accuracy of test data**************")
-print("\n")
-print("\n")
-print("测试数据")
-print("num_of_testData:{0}".format(len(images_test_all)))
-for i in labels_test_all:
-    print(i," ",end="")
+    # with open('logs/loss'+str(learning_rate)+'.txt', 'a') as f:
+    #     print(loss_value, file=f)
+    # with open('logs/accuracy'+str(learning_rate)+'.txt', 'a') as f:
+    #     print(accuracy, file=f)
 
-predicted_all = session.run([predicted_labels],feed_dict={images_ph:images_test_all})[0]
-print("\n预测数据")
-for i in predicted_all:
-    print(i," ",end="")
-match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
-accuracy = match_count_all/ len(labels_test_all)
-print("\nAll test images' accuracy: {0}".format(accuracy))
+# print("\n************Caculate the accuracy of test data**************")
+# print("\n")
+# print("\n")
+# print("测试数据")
+# print("num_of_testData:{0}".format(len(images_test_all)))
+# for i in labels_test_all:
+#     print(i, " ", end="")
+#
+# predicted_all = session.run([predicted_labels], feed_dict={images_ph: images_test_all})[0]
+# print("\n预测数据")
+# for i in predicted_all:
+#     print(i, " ", end="")
+# match_count_all = sum([int(y == y_) for y, y_ in zip(labels_test_all, predicted_all)])
+# accuracy = match_count_all / len(labels_test_all)
+# print("\nAll test images' accuracy: {0}".format(accuracy))
 
 
-for i in range(10):
-    print("================================================================")
-    sample_images, sample_labels = batch(test_images32, test_labels, 10)  # 从测试集中随机选取10张图片
-    predicted = session.run([predicted_labels],
-                            feed_dict={images_ph: sample_images})[0]
-    # Display the predictions and the ground truth visually.
-    fig = plt.figure(figsize=(10, 10))   # 在10英寸*10英寸 的画布上画图
-    for i in range(len(sample_images)):
-        truth = sample_labels[i]
-        prediction = predicted[i]
-        plt.subplot(5, 2, 1 + i)  # 整个绘图区域被分成5行和2列，指定创建的象所在的区域....
-        plt.axis('off')   # 关掉图像坐标
-        color = 'green' if truth == prediction else 'red'
-        plt.text(40, 10, "Truth:        {0}\nPrediction: {1}".format(truth, prediction),
-                 fontsize=12, color=color)
-        plt.imshow(sample_images[i])
-    plt.show()
+# for i in range(30):
+#     print("================================================================")
+#     sample_images, sample_labels = batch(test_images32, test_labels, 10)  # 从测试集中随机选取10张图片
+#     predicted = session.run([predicted_labels],
+#                             feed_dict={images_ph: sample_images})[0]
+#     # Display the predictions and the ground truth visually.
+#     fig = plt.figure(figsize=(10, 5))   # 在10英寸*10英寸 的画布上画图
+#     for i in range(len(sample_images)):
+#         truth = sample_labels[i]
+#         prediction = predicted[i]
+#         plt.subplot(5, 2, 1 + i)  # 整个绘图区域被分成5行和2列，指定创建的象所在的区域....
+#         plt.axis('off')   # 关掉图像坐标
+#         color = 'green' if truth == prediction else 'red'
+#         plt.text(40, 10, "Truth:        {0}\nPrediction: {1}".format(truth, prediction),
+#                  fontsize=12, color=color)
+#         plt.imshow(sample_images[i])
+#     plt.show()
 
-# session.close()
+session.close()
