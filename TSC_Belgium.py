@@ -29,9 +29,10 @@ def load_data(data_dir):
             labels.append(int(d))
     return images, labels
 
+
 # 加载 training and testing 数据集.
-train_data_dir = os.path.join("./dataset/Belgium", "Training")
-test_data_dir = os.path.join("./dataset/Belgium", "Testing")
+train_data_dir = r"D:/MachineLearning/dataset/Belgium/Training"
+test_data_dir = r"D:/MachineLearning/dataset/Belgium/Testing"
 
 
 # 从数据集中随机选择n张图片
